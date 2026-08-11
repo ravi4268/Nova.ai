@@ -1,0 +1,383 @@
+import React, { useState } from "react";
+import "./Images.css";
+
+function Images() {
+  const [prompt, setPrompt] = useState("");
+  const [generatedImage, setGeneratedImage] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const suggestions = [
+    {
+      title: "Create a caricature",
+      prompt:
+        "Create a beautiful colorful cartoon caricature with a modern AI art style",
+      image:
+        "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?auto=format&fit=crop&w=700&q=85",
+    },
+    {
+      title: "Futuristic AI",
+      prompt:
+        "Create a futuristic AI robot standing in a modern city with neon lights",
+      image:
+        "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=700&q=85",
+    },
+    {
+      title: "Anime",
+      prompt:
+        "Create a high quality anime character standing under a beautiful blue sky",
+      image:
+        "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=700&q=85",
+    },
+    {
+      title: "Nature",
+      prompt:
+        "Create a beautiful cinematic mountain landscape with blue sky and clouds",
+      image:
+        "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=700&q=85",
+    },
+    {
+      title: "Summer list",
+      prompt:
+        "Create a colorful summer vacation illustration with food, mountains and nature",
+      image:
+        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=700&q=85",
+    },
+  ];
+
+  const generateImage = () => {
+    if (!prompt.trim()) {
+      alert("Please describe the image first.");
+      return;
+    }
+
+    setLoading(true);
+    setGeneratedImage(null);
+
+    /*
+      Demo image generation.
+
+      Yahan baad me real AI image API connect
+      kar sakte ho.
+    */
+
+    setTimeout(() => {
+      const randomImage =
+        suggestions[
+          Math.floor(
+            Math.random() * suggestions.length
+          )
+        ].image;
+
+      setGeneratedImage(randomImage);
+      setLoading(false);
+    }, 1500);
+  };
+
+  const selectSuggestion = (item) => {
+    setPrompt(item.prompt);
+  };
+
+  const downloadImage = async () => {
+    if (!generatedImage) return;
+
+    try {
+      const response = await fetch(
+        generatedImage
+      );
+
+      const blob = await response.blob();
+
+      const url =
+        window.URL.createObjectURL(blob);
+
+      const link =
+        document.createElement("a");
+
+      link.href = url;
+      link.download = "nova-ai-image.jpg";
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      link.remove();
+
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      alert("Image download failed.");
+    }
+  };
+
+  return (
+    <div className="images-page">
+
+      {/* =================================
+          HEADER
+      ================================= */}
+
+      <div className="images-header">
+
+        <div>
+          <h1>Images</h1>
+
+          <p>
+            Create beautiful images with Nova AI
+          </p>
+        </div>
+
+        <div className="image-ai-badge">
+          ✨ Nova AI
+        </div>
+
+      </div>
+
+      {/* =================================
+          PROMPT BOX
+      ================================= */}
+
+      <div className="image-prompt-wrapper">
+
+        <button
+          className="image-attach"
+          type="button"
+          title="Attach image"
+        >
+          📎
+        </button>
+
+        <input
+          type="text"
+          value={prompt}
+          onChange={(e) =>
+            setPrompt(e.target.value)
+          }
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              generateImage();
+            }
+          }}
+          placeholder="Describe a new image..."
+        />
+
+        <button
+          className="image-mic"
+          type="button"
+          title="Voice"
+        >
+          🎙️
+        </button>
+
+        <button
+          className="generate-image-button"
+          onClick={generateImage}
+          disabled={loading}
+        >
+          {loading ? "..." : "➤"}
+        </button>
+
+      </div>
+
+      <div className="image-prompt-note">
+        ✨ Describe anything you want Nova AI
+        to create
+      </div>
+
+      {/* =================================
+          GENERATED IMAGE
+      ================================= */}
+
+      {loading && (
+        <div className="image-loading">
+
+          <div className="loading-spinner">
+            ✨
+          </div>
+
+          <h3>
+            Nova AI is creating your image...
+          </h3>
+
+          <p>
+            Please wait a moment
+          </p>
+
+        </div>
+      )}
+
+      {generatedImage && !loading && (
+        <div className="generated-section">
+
+          <div className="generated-header">
+
+            <div>
+              <h2>
+                Your Image
+              </h2>
+
+              <p>
+                Generated by Nova AI
+              </p>
+            </div>
+
+            <button
+              className="download-image"
+              onClick={downloadImage}
+            >
+              ⬇ Download
+            </button>
+
+          </div>
+
+          <div className="generated-image-card">
+
+            <img
+              src={generatedImage}
+              alt="Nova AI Generated"
+            />
+
+            <div className="generated-overlay">
+              ✨ Nova AI
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+      {/* =================================
+          CREATE AN IMAGE
+      ================================= */}
+
+      <section className="create-section">
+
+        <div className="section-title-row">
+
+          <h2>
+            Create an image
+          </h2>
+
+          <div className="image-arrows">
+
+            <button>
+              ‹
+            </button>
+
+            <button>
+              ›
+            </button>
+
+          </div>
+
+        </div>
+
+        {/* =================================
+            SUGGESTION CARDS
+        ================================= */}
+
+        <div className="image-suggestions">
+
+          {suggestions.map(
+            (item, index) => (
+
+              <div
+                className="image-card"
+                key={index}
+                onClick={() =>
+                  selectSuggestion(item)
+                }
+              >
+
+                <img
+                  src={item.image}
+                  alt={item.title}
+                />
+
+                <div className="image-card-overlay">
+                  <span>
+                    {item.title}
+                  </span>
+
+                  <small>
+                    ✨
+                  </small>
+                </div>
+
+              </div>
+
+            )
+          )}
+
+        </div>
+
+      </section>
+
+      {/* =================================
+          FEATURES
+      ================================= */}
+
+      <section className="image-features">
+
+        <div className="image-feature">
+
+          <div className="feature-icon">
+            🎨
+          </div>
+
+          <div>
+            <strong>
+              Creative Images
+            </strong>
+
+            <p>
+              Turn your ideas into beautiful
+              visuals.
+            </p>
+          </div>
+
+        </div>
+
+        <div className="image-feature">
+
+          <div className="feature-icon">
+            ⚡
+          </div>
+
+          <div>
+            <strong>
+              Fast Generation
+            </strong>
+
+            <p>
+              Generate images quickly with
+              Nova AI.
+            </p>
+          </div>
+
+        </div>
+
+        <div className="image-feature">
+
+          <div className="feature-icon">
+            ✨
+          </div>
+
+          <div>
+            <strong>
+              AI Powered
+            </strong>
+
+            <p>
+              Create unique images from simple
+              prompts.
+            </p>
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+  );
+}
+
+export default Images;
