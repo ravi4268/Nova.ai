@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import "./styles.css";
 
+import Library from "./pages/Library";
 import Images from "./pages/Images";
 import Subscription from "./pages/Subscription";
 
@@ -16,23 +17,14 @@ function App() {
   );
 
   // =========================================
-  // SIDEBAR + PAGE
+  // NAVIGATION
   // =========================================
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [page, setPage] = useState("chat");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // =========================================
-  // IMPORTANT NAVIGATION FUNCTION
-  // =========================================
-
-  const navigateTo = (newPage) => {
-    setPage(newPage);
-    setSidebarOpen(false);
-  };
-
-  // =========================================
-  // CHAT STATES
+  // CHAT
   // =========================================
 
   const [message, setMessage] = useState("");
@@ -40,21 +32,22 @@ function App() {
   const [messages, setMessages] = useState(() => {
     try {
       const saved = localStorage.getItem("novaMessages");
-
       return saved ? JSON.parse(saved) : [];
-    } catch (error) {
+    } catch {
       return [];
     }
   });
 
+  const [sending, setSending] = useState(false);
+  const [backendError, setBackendError] = useState("");
+
+  // =========================================
+  // FILE / IMAGE
+  // =========================================
+
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
-
   const [preview, setPreview] = useState(null);
-
-  const [sending, setSending] = useState(false);
-
-  const [backendError, setBackendError] = useState("");
 
   const imageInputRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -71,6 +64,15 @@ function App() {
   }, [messages]);
 
   // =========================================
+  // NAVIGATION
+  // =========================================
+
+  const navigateTo = (targetPage) => {
+    setPage(targetPage);
+    setSidebarOpen(false);
+  };
+
+  // =========================================
   // LOGIN
   // =========================================
 
@@ -80,7 +82,6 @@ function App() {
     localStorage.setItem("isLoggedIn", "true");
 
     setIsLoggedIn(true);
-
     setPage("chat");
   };
 
@@ -92,9 +93,7 @@ function App() {
     localStorage.removeItem("isLoggedIn");
 
     setIsLoggedIn(false);
-
     setSidebarOpen(false);
-
     setPage("chat");
   };
 
@@ -104,22 +103,16 @@ function App() {
 
   const newChat = () => {
     setMessages([]);
-
     setMessage("");
 
     setSelectedImage(null);
-
     setSelectedFile(null);
-
     setPreview(null);
 
-    setBackendError("");
+    localStorage.removeItem("novaMessages");
 
     setPage("chat");
-
     setSidebarOpen(false);
-
-    localStorage.removeItem("novaMessages");
   };
 
   // =========================================
@@ -137,7 +130,6 @@ function App() {
     }
 
     setSelectedImage(file);
-
     setSelectedFile(null);
 
     const imageUrl = URL.createObjectURL(file);
@@ -155,9 +147,7 @@ function App() {
     if (!file) return;
 
     setSelectedFile(file);
-
     setSelectedImage(null);
-
     setPreview(null);
   };
 
@@ -167,9 +157,7 @@ function App() {
 
   const removeAttachment = () => {
     setSelectedImage(null);
-
     setSelectedFile(null);
-
     setPreview(null);
 
     if (imageInputRef.current) {
@@ -199,14 +187,9 @@ function App() {
     const imageToSend = selectedImage;
     const fileToSend = selectedFile;
 
-    const tempId = Date.now();
-
-    // Temporary message
     const tempMessage = {
-      id: tempId,
-
+      id: Date.now(),
       user: userMessage,
-
       ai: "Thinking...",
 
       imagePreview: imageToSend
@@ -222,28 +205,21 @@ function App() {
         : null,
 
       imageUrl: null,
-
       uploadedFileUrl: null,
-
-      uploadedFileName: null,
+      uploadedFileName: null
     };
 
     setMessages((prev) => [
       ...prev,
-      tempMessage,
+      tempMessage
     ]);
 
-    // Clear input
     setMessage("");
-
     setSelectedImage(null);
-
     setSelectedFile(null);
-
     setPreview(null);
 
     setSending(true);
-
     setBackendError("");
 
     try {
@@ -272,7 +248,7 @@ function App() {
         `${API_URL}/api/chat`,
         {
           method: "POST",
-          body: formData,
+          body: formData
         }
       );
 
@@ -282,32 +258,32 @@ function App() {
         );
       }
 
-      const data =
-        await response.json();
+      const data = await response.json();
 
       setMessages((prev) => {
-        return prev.map((item) => {
-          if (item.id !== tempId) {
-            return item;
-          }
+        const updated = [...prev];
 
-          return {
-            ...item,
+        const lastIndex =
+          updated.length - 1;
 
-            ai:
-              data.reply ||
-              "I'm fine 😊",
+        updated[lastIndex] = {
+          ...updated[lastIndex],
 
-            imageUrl:
-              data.image?.url || null,
+          ai:
+            data.reply ||
+            "I'm fine 😊 How can I help you?",
 
-            uploadedFileUrl:
-              data.file?.url || null,
+          imageUrl:
+            data.image?.url || null,
 
-            uploadedFileName:
-              data.file?.name || null,
-          };
-        });
+          uploadedFileUrl:
+            data.file?.url || null,
+
+          uploadedFileName:
+            data.file?.name || null
+        };
+
+        return updated;
       });
     } catch (error) {
       console.error(
@@ -316,22 +292,23 @@ function App() {
       );
 
       setBackendError(
-        "Backend connection failed. Make sure server.js is running on port 5000."
+        "Backend connection failed. Please make sure server.js is running on port 5000."
       );
 
       setMessages((prev) => {
-        return prev.map((item) => {
-          if (item.id !== tempId) {
-            return item;
-          }
+        const updated = [...prev];
 
-          return {
-            ...item,
+        const lastIndex =
+          updated.length - 1;
 
-            ai:
-              "❌ Backend se connection nahi ho pa raha. Please server.js check karein.",
-          };
-        });
+        updated[lastIndex] = {
+          ...updated[lastIndex],
+
+          ai:
+            "I'm fine 😊 But Nova AI backend is currently offline."
+        };
+
+        return updated;
       });
     } finally {
       setSending(false);
@@ -339,7 +316,7 @@ function App() {
   };
 
   // =========================================
-  // ENTER SEND
+  // ENTER
   // =========================================
 
   const handleKeyDown = (e) => {
@@ -348,7 +325,6 @@ function App() {
       !e.shiftKey
     ) {
       e.preventDefault();
-
       sendMessage();
     }
   };
@@ -391,9 +367,7 @@ function App() {
 
           <form onSubmit={login}>
 
-            <label>
-              Email
-            </label>
+            <label>Email</label>
 
             <input
               type="email"
@@ -401,9 +375,7 @@ function App() {
               required
             />
 
-            <label>
-              Password
-            </label>
+            <label>Password</label>
 
             <input
               type="password"
@@ -412,8 +384,8 @@ function App() {
             />
 
             <button
-              className="login-button"
               type="submit"
+              className="login-button"
             >
               Login to Nova AI →
             </button>
@@ -431,7 +403,7 @@ function App() {
   }
 
   // =========================================
-  // MAIN WEBSITE
+  // MAIN APP
   // =========================================
 
   return (
@@ -448,9 +420,7 @@ function App() {
         />
       )}
 
-      {/* =====================================
-          SIDEBAR
-      ===================================== */}
+      {/* SIDEBAR */}
 
       <aside
         className={`sidebar ${
@@ -475,6 +445,7 @@ function App() {
         {/* NEW CHAT */}
 
         <button
+          type="button"
           className="new-chat"
           onClick={newChat}
         >
@@ -485,9 +456,8 @@ function App() {
 
         <div className="navigation">
 
-          {/* CHAT */}
-
           <button
+            type="button"
             className={
               page === "chat"
                 ? "selected"
@@ -497,18 +467,12 @@ function App() {
               navigateTo("chat")
             }
           >
-            <span className="nav-icon">
-              💬
-            </span>
-
-            <span>
-              Chat
-            </span>
+            💬
+            <span>Chat</span>
           </button>
 
-          {/* HISTORY */}
-
           <button
+            type="button"
             className={
               page === "history"
                 ? "selected"
@@ -518,18 +482,12 @@ function App() {
               navigateTo("history")
             }
           >
-            <span className="nav-icon">
-              🕘
-            </span>
-
-            <span>
-              History
-            </span>
+            🕘
+            <span>History</span>
           </button>
 
-          {/* IMAGES */}
-
           <button
+            type="button"
             className={
               page === "images"
                 ? "selected"
@@ -539,41 +497,44 @@ function App() {
               navigateTo("images")
             }
           >
-            <span className="nav-icon">
-              🖼️
-            </span>
-
-            <span>
-              Images
-            </span>
+            🖼️
+            <span>Images</span>
           </button>
 
-          {/* SUBSCRIPTION */}
+          {/* LIBRARY */}
 
           <button
+            type="button"
+            className={
+              page === "library"
+                ? "selected"
+                : ""
+            }
+            onClick={() =>
+              navigateTo("library")
+            }
+          >
+            📚
+            <span>Library</span>
+          </button>
+
+          <button
+            type="button"
             className={
               page === "subscription"
                 ? "selected"
                 : ""
             }
             onClick={() =>
-              navigateTo(
-                "subscription"
-              )
+              navigateTo("subscription")
             }
           >
-            <span className="nav-icon">
-              💳
-            </span>
-
-            <span>
-              Subscription
-            </span>
+            💳
+            <span>Subscription</span>
           </button>
 
-          {/* SETTINGS */}
-
           <button
+            type="button"
             className={
               page === "settings"
                 ? "selected"
@@ -583,13 +544,8 @@ function App() {
               navigateTo("settings")
             }
           >
-            <span className="nav-icon">
-              ⚙️
-            </span>
-
-            <span>
-              Settings
-            </span>
+            ⚙️
+            <span>Settings</span>
           </button>
 
         </div>
@@ -605,18 +561,14 @@ function App() {
             </div>
 
             <div>
-              <strong>
-                User
-              </strong>
-
-              <small>
-                Free Plan
-              </small>
+              <strong>User</strong>
+              <small>Free Plan</small>
             </div>
 
           </div>
 
           <button
+            type="button"
             className="logout"
             onClick={logout}
           >
@@ -627,9 +579,7 @@ function App() {
 
       </aside>
 
-      {/* =====================================
-          MAIN
-      ===================================== */}
+      {/* MAIN */}
 
       <div className="main">
 
@@ -638,6 +588,7 @@ function App() {
         <header className="topbar">
 
           <button
+            type="button"
             className="hamburger"
             onClick={() =>
               setSidebarOpen(
@@ -661,6 +612,7 @@ function App() {
           </div>
 
           <button
+            type="button"
             className="top-logout"
             onClick={logout}
           >
@@ -677,17 +629,14 @@ function App() {
           </div>
         )}
 
-        {/* =====================================
-            CONTENT
-        ===================================== */}
+        {/* CONTENT */}
 
         <main className="content">
 
-          {/* ===================================
-              CHAT
-          =================================== */}
+          {/* CHAT */}
 
           {page === "chat" && (
+
             <div className="chat">
 
               <div className="chat-title">
@@ -697,7 +646,6 @@ function App() {
                 </div>
 
                 <div>
-
                   <h2>
                     How can I help you?
                   </h2>
@@ -705,12 +653,9 @@ function App() {
                   <p>
                     Ask Nova AI anything
                   </p>
-
                 </div>
 
               </div>
-
-              {/* WELCOME */}
 
               {messages.length === 0 ? (
 
@@ -733,6 +678,7 @@ function App() {
                   <div className="suggestions">
 
                     <button
+                      type="button"
                       onClick={() =>
                         setMessage(
                           "Explain JavaScript"
@@ -743,6 +689,7 @@ function App() {
                     </button>
 
                     <button
+                      type="button"
                       onClick={() =>
                         setMessage(
                           "Create a React website"
@@ -753,6 +700,7 @@ function App() {
                     </button>
 
                     <button
+                      type="button"
                       onClick={() =>
                         setMessage(
                           "Give me project ideas"
@@ -777,8 +725,6 @@ function App() {
                         className="message-group"
                         key={item.id}
                       >
-
-                        {/* USER */}
 
                         <div className="user-message">
 
@@ -826,8 +772,6 @@ function App() {
 
                         </div>
 
-                        {/* AI */}
-
                         <div className="ai-message">
 
                           <div className="message-avatar nova">
@@ -843,15 +787,9 @@ function App() {
                             {item.imageUrl && (
                               <div className="backend-image">
 
-                                <p>
-                                  Uploaded Image:
-                                </p>
-
                                 <img
-                                  src={
-                                    item.imageUrl
-                                  }
-                                  alt="Backend"
+                                  src={item.imageUrl}
+                                  alt="Generated"
                                 />
 
                               </div>
@@ -887,14 +825,13 @@ function App() {
 
               <div className="input-area">
 
-                {/* ATTACHMENT PREVIEW */}
-
                 {(selectedImage ||
                   selectedFile) && (
 
                   <div className="attachment-preview">
 
                     {selectedImage && (
+
                       <div className="preview-card">
 
                         <img
@@ -915,6 +852,7 @@ function App() {
                         </div>
 
                         <button
+                          type="button"
                           onClick={
                             removeAttachment
                           }
@@ -923,9 +861,11 @@ function App() {
                         </button>
 
                       </div>
+
                     )}
 
                     {selectedFile && (
+
                       <div className="file-selected">
 
                         <span>
@@ -945,6 +885,7 @@ function App() {
                         </div>
 
                         <button
+                          type="button"
                           onClick={
                             removeAttachment
                           }
@@ -953,21 +894,17 @@ function App() {
                         </button>
 
                       </div>
+
                     )}
 
                   </div>
                 )}
 
-                {/* INPUT BOX */}
-
                 <div className="input-box">
 
-                  {/* IMAGE BUTTON */}
-
                   <button
-                    className="attach-button"
                     type="button"
-                    title="Upload Image"
+                    className="attach-button"
                     onClick={() =>
                       imageInputRef.current?.click()
                     }
@@ -985,12 +922,9 @@ function App() {
                     }
                   />
 
-                  {/* FILE BUTTON */}
-
                   <button
-                    className="attach-button"
                     type="button"
-                    title="Upload File"
+                    className="attach-button"
                     onClick={() =>
                       fileInputRef.current?.click()
                     }
@@ -1007,8 +941,6 @@ function App() {
                     }
                   />
 
-                  {/* TEXT */}
-
                   <textarea
                     value={message}
                     placeholder="Message Nova AI..."
@@ -1023,16 +955,13 @@ function App() {
                     rows="1"
                   />
 
-                  {/* SEND */}
-
                   <button
+                    type="button"
                     className="send-button"
                     onClick={sendMessage}
                     disabled={sending}
                   >
-                    {sending
-                      ? "..."
-                      : "➤"}
+                    {sending ? "..." : "➤"}
                   </button>
 
                 </div>
@@ -1045,13 +974,13 @@ function App() {
               </div>
 
             </div>
+
           )}
 
-          {/* ===================================
-              HISTORY
-          =================================== */}
+          {/* HISTORY */}
 
           {page === "history" && (
+
             <div className="page">
 
               <div className="page-icon">
@@ -1103,29 +1032,31 @@ function App() {
               )}
 
             </div>
+
           )}
 
-          {/* ===================================
-              IMAGES
-          =================================== */}
+          {/* IMAGES */}
 
           {page === "images" && (
             <Images />
           )}
 
-          {/* ===================================
-              SUBSCRIPTION
-          =================================== */}
+          {/* LIBRARY */}
+
+          {page === "library" && (
+            <Library />
+          )}
+
+          {/* SUBSCRIPTION */}
 
           {page === "subscription" && (
             <Subscription />
           )}
 
-          {/* ===================================
-              SETTINGS
-          =================================== */}
+          {/* SETTINGS */}
 
           {page === "settings" && (
+
             <div className="page">
 
               <div className="page-icon">
@@ -1143,7 +1074,6 @@ function App() {
               <div className="setting">
 
                 <div>
-
                   <strong>
                     Dark Mode
                   </strong>
@@ -1151,7 +1081,6 @@ function App() {
                   <small>
                     Nova AI dark interface
                   </small>
-
                 </div>
 
                 <span>
@@ -1163,7 +1092,6 @@ function App() {
               <div className="setting">
 
                 <div>
-
                   <strong>
                     AI Assistant
                   </strong>
@@ -1171,7 +1099,6 @@ function App() {
                   <small>
                     Enable AI responses
                   </small>
-
                 </div>
 
                 <span>
@@ -1181,6 +1108,7 @@ function App() {
               </div>
 
             </div>
+
           )}
 
         </main>
