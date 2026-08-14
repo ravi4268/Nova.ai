@@ -3,16 +3,16 @@ import "./Subscription.css";
 
 function Subscription() {
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [paymentMethod, setPaymentMethod] = useState("card");
+  const [paymentMethod, setPaymentMethod] = useState("upi");
+  const [paymentDone, setPaymentDone] = useState(false);
 
   const plans = [
     {
-      id: 1,
-      name: "Free",
-      price: "₹0",
-      period: "/month",
-      description: "Perfect for getting started",
+      id: "free",
       icon: "🆓",
+      name: "Free",
+      description: "Perfect for getting started",
+      price: 0,
       features: [
         "20 AI messages",
         "Basic AI access",
@@ -20,14 +20,12 @@ function Subscription() {
         "Standard support",
       ],
     },
-
     {
-      id: 2,
-      name: "Basic",
-      price: "₹199",
-      period: "/month",
-      description: "For regular AI users",
+      id: "basic",
       icon: "🚀",
+      name: "Basic",
+      description: "For regular AI users",
+      price: 199,
       features: [
         "500 AI messages",
         "Faster AI responses",
@@ -35,14 +33,12 @@ function Subscription() {
         "Priority support",
       ],
     },
-
     {
-      id: 3,
-      name: "Pro",
-      price: "₹499",
-      period: "/month",
-      description: "For professional users",
+      id: "pro",
       icon: "⭐",
+      name: "Pro",
+      description: "For professional users",
+      price: 499,
       popular: true,
       features: [
         "Unlimited AI messages",
@@ -52,14 +48,12 @@ function Subscription() {
         "Priority support",
       ],
     },
-
     {
-      id: 4,
-      name: "Premium",
-      price: "₹999",
-      period: "/month",
-      description: "Complete AI experience",
+      id: "premium",
       icon: "👑",
+      name: "Premium",
+      description: "Complete AI experience",
+      price: 999,
       features: [
         "Everything in Pro",
         "Premium AI models",
@@ -70,53 +64,43 @@ function Subscription() {
     },
   ];
 
-  // =========================================
-  // SUBSCRIBE
-  // =========================================
-
-  const handleSubscribe = (plan) => {
-    if (plan.name === "Free") {
-      alert("You are already using the Free Plan.");
+  const openPayment = (plan) => {
+    if (plan.price === 0) {
+      alert("You are already using the Free plan.");
       return;
     }
 
     setSelectedPlan(plan);
-    setPaymentMethod("card");
+    setPaymentDone(false);
+    setPaymentMethod("upi");
   };
-
-  // =========================================
-  // CLOSE PAYMENT
-  // =========================================
 
   const closePayment = () => {
     setSelectedPlan(null);
-    setPaymentMethod("card");
+    setPaymentDone(false);
   };
-
-  // =========================================
-  // PAYMENT
-  // =========================================
 
   const handlePayment = (e) => {
     e.preventDefault();
 
-    if (!selectedPlan) {
-      return;
-    }
+    setPaymentDone(true);
 
-    alert(
-      `Payment initiated for ${selectedPlan.name} Plan - ${selectedPlan.price}/month`
-    );
+    setTimeout(() => {
+      alert(
+        `${selectedPlan.name} plan selected successfully!`
+      );
 
-    closePayment();
+      setSelectedPlan(null);
+      setPaymentDone(false);
+    }, 1200);
   };
 
   return (
     <div className="subscription-page">
 
-      {/* =====================================
+      {/* =========================
           HEADER
-      ===================================== */}
+      ========================= */}
 
       <div className="subscription-header">
 
@@ -130,8 +114,8 @@ function Subscription() {
             <h1>Choose Your Plan</h1>
 
             <p>
-              Upgrade your Nova AI experience
-              with a plan that fits you.
+              Upgrade your Nova AI experience with a
+              plan that fits you.
             </p>
           </div>
 
@@ -139,9 +123,9 @@ function Subscription() {
 
       </div>
 
-      {/* =====================================
+      {/* =========================
           PLANS
-      ===================================== */}
+      ========================= */}
 
       <div className="plans-grid">
 
@@ -154,7 +138,7 @@ function Subscription() {
             key={plan.id}
           >
 
-            {/* POPULAR BADGE */}
+            {/* POPULAR */}
 
             {plan.popular && (
               <div className="popular-badge">
@@ -162,13 +146,13 @@ function Subscription() {
               </div>
             )}
 
-            {/* PLAN ICON */}
+            {/* ICON */}
 
             <div className="plan-icon">
               {plan.icon}
             </div>
 
-            {/* PLAN NAME */}
+            {/* NAME */}
 
             <h2>
               {plan.name}
@@ -185,11 +169,11 @@ function Subscription() {
             <div className="plan-price">
 
               <span>
-                {plan.price}
+                ₹{plan.price}
               </span>
 
               <small>
-                {plan.period}
+                /month
               </small>
 
             </div>
@@ -231,14 +215,12 @@ function Subscription() {
                   : ""
               }`}
               onClick={() =>
-                handleSubscribe(plan)
+                openPayment(plan)
               }
             >
-
-              {plan.name === "Free"
+              {plan.price === 0
                 ? "Current Plan"
                 : "Subscribe"}
-
             </button>
 
           </div>
@@ -247,17 +229,25 @@ function Subscription() {
 
       </div>
 
-      {/* =====================================
+      {/* =========================
           PAYMENT MODAL
-      ===================================== */}
+      ========================= */}
 
       {selectedPlan && (
 
-        <div className="payment-overlay">
+        <div
+          className="payment-overlay"
+          onClick={closePayment}
+        >
 
-          <div className="payment-modal">
+          <div
+            className="payment-modal"
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
 
-            {/* CLOSE BUTTON */}
+            {/* CLOSE */}
 
             <button
               type="button"
@@ -267,188 +257,208 @@ function Subscription() {
               ×
             </button>
 
-            {/* PAYMENT HEADER */}
+            {!paymentDone ? (
 
-            <div className="payment-header">
+              <>
+                {/* PAYMENT HEADER */}
 
-              <div className="payment-modal-icon">
-                💳
-              </div>
+                <div className="payment-header">
 
-              <h2>
-                Subscribe to{" "}
-                {selectedPlan.name}
-              </h2>
+                  <div className="payment-modal-icon">
+                    💳
+                  </div>
 
-              <p>
-                Total:
-                <strong>
-                  {" "}
-                  {selectedPlan.price}/month
-                </strong>
-              </p>
+                  <h2>
+                    Subscribe to{" "}
+                    <strong>
+                      {selectedPlan.name}
+                    </strong>
+                  </h2>
 
-            </div>
+                  <p>
+                    Complete your payment to
+                    activate your Nova AI plan.
+                  </p>
 
-            {/* =================================
-                PAYMENT METHODS
-            ================================= */}
+                </div>
 
-            <div className="payment-methods">
+                {/* PAYMENT METHODS */}
 
-              <button
-                type="button"
-                className={`method ${
-                  paymentMethod === "card"
-                    ? "active-method"
-                    : ""
-                }`}
-                onClick={() =>
-                  setPaymentMethod("card")
-                }
-              >
-                💳
-                <span>Card</span>
-              </button>
+                <div className="payment-methods">
 
-              <button
-                type="button"
-                className={`method ${
-                  paymentMethod === "upi"
-                    ? "active-method"
-                    : ""
-                }`}
-                onClick={() =>
-                  setPaymentMethod("upi")
-                }
-              >
-                📱
-                <span>UPI</span>
-              </button>
+                  <button
+                    type="button"
+                    className={`method ${
+                      paymentMethod === "upi"
+                        ? "active-method"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setPaymentMethod("upi")
+                    }
+                  >
+                    📱 UPI
+                  </button>
 
-            </div>
+                  <button
+                    type="button"
+                    className={`method ${
+                      paymentMethod === "card"
+                        ? "active-method"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setPaymentMethod("card")
+                    }
+                  >
+                    💳 Card
+                  </button>
 
-            {/* =================================
-                PAYMENT FORM
-            ================================= */}
+                </div>
 
-            <form onSubmit={handlePayment}>
+                {/* FORM */}
 
-              {/* NAME */}
+                <form
+                  onSubmit={handlePayment}
+                >
 
-              <label>
-                Full Name
-              </label>
+                  {paymentMethod === "upi" ? (
 
-              <input
-                type="text"
-                placeholder="Enter your full name"
-                required
-              />
-
-              {/* CARD */}
-
-              {paymentMethod === "card" && (
-                <>
-
-                  <label>
-                    Card Number
-                  </label>
-
-                  <input
-                    type="text"
-                    placeholder="1234 5678 9012 3456"
-                    maxLength="19"
-                    required
-                  />
-
-                  <div className="card-row">
-
-                    <div className="card-field">
-
+                    <>
                       <label>
-                        Expiry Date
+                        UPI ID
                       </label>
 
                       <input
                         type="text"
-                        placeholder="MM/YY"
-                        maxLength="5"
+                        placeholder="example@upi"
                         required
                       />
 
-                    </div>
+                      <p className="upi-example">
+                        Example: name@okaxis
+                      </p>
+                    </>
 
-                    <div className="card-field">
+                  ) : (
+
+                    <>
 
                       <label>
-                        CVV
+                        Card Number
                       </label>
 
                       <input
-                        type="password"
-                        placeholder="123"
-                        maxLength="3"
+                        type="text"
+                        placeholder="1234 5678 9012 3456"
+                        maxLength="19"
                         required
                       />
 
-                    </div>
+                      <label>
+                        Card Holder Name
+                      </label>
+
+                      <input
+                        type="text"
+                        placeholder="Enter card holder name"
+                        required
+                      />
+
+                      <div className="card-row">
+
+                        <div className="card-field">
+
+                          <label>
+                            Expiry
+                          </label>
+
+                          <input
+                            type="text"
+                            placeholder="MM/YY"
+                            required
+                          />
+
+                        </div>
+
+                        <div className="card-field">
+
+                          <label>
+                            CVV
+                          </label>
+
+                          <input
+                            type="password"
+                            placeholder="•••"
+                            maxLength="3"
+                            required
+                          />
+
+                        </div>
+
+                      </div>
+
+                    </>
+
+                  )}
+
+                  {/* AMOUNT */}
+
+                  <div className="amount-box">
+
+                    <span>
+                      Total Amount
+                    </span>
+
+                    <strong>
+                      ₹{selectedPlan.price}
+                    </strong>
 
                   </div>
 
-                </>
-              )}
+                  {/* PAY */}
 
-              {/* UPI */}
+                  <button
+                    type="submit"
+                    className="pay-button"
+                  >
+                    Pay ₹{selectedPlan.price}
+                  </button>
 
-              {paymentMethod === "upi" && (
-                <>
+                  <p className="secure-payment">
+                    🔒 Secure payment powered by
+                    Nova AI
+                  </p>
 
-                  <label>
-                    UPI ID
-                  </label>
+                </form>
 
-                  <input
-                    type="text"
-                    placeholder="yourname@upi"
-                    required
-                  />
+              </>
 
-                  <div className="upi-example">
-                    Example: username@upi
-                  </div>
+            ) : (
 
-                </>
-              )}
+              /* SUCCESS */
 
-              {/* AMOUNT */}
+              <div className="payment-success">
 
-              <div className="amount-box">
+                <div className="success-icon">
+                  ✓
+                </div>
 
-                <span>
-                  Amount to Pay
-                </span>
+                <h2>
+                  Payment Successful
+                </h2>
 
-                <strong>
-                  {selectedPlan.price}
-                </strong>
+                <p>
+                  Your{" "}
+                  <strong>
+                    {selectedPlan.name}
+                  </strong>{" "}
+                  plan is being activated.
+                </p>
 
               </div>
 
-              {/* PAY BUTTON */}
-
-              <button
-                type="submit"
-                className="pay-button"
-              >
-                🔒 Pay {selectedPlan.price}
-              </button>
-
-            </form>
-
-            <div className="secure-payment">
-              🔐 Secure payment information
-            </div>
+            )}
 
           </div>
 

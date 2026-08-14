@@ -9,7 +9,7 @@ function Library() {
       const saved = localStorage.getItem("novaProjects");
       return saved ? JSON.parse(saved) : [];
     } catch {
-      return [];
+      return [];  
     }
   });
 
